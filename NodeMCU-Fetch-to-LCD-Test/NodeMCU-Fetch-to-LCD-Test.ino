@@ -1,6 +1,6 @@
 /*
    AVENGERS: DOOMSDAY COUNTDOWN
-   NodeMCU ESP8266 - Clock Fetch Test
+   NodeMCU ESP8266 - Fetch to LCD Test
 
    Release Date: August 23, 2026
 
@@ -10,11 +10,16 @@
    - Displays US Time
    - Calculates remaining:
        DAYS : HOURS : MINUTES : SECONDS
+   - Display the fetched data on the LCD
 */
 
 #include <ESP8266WiFi.h>
 #include <time.h>
+#include <Wire.h> 
+#include <LiquidCrystal_I2C.h>
 
+LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
+int test = 0;
 // ======================================================
 // WIFI SETTINGS
 // ======================================================
@@ -95,9 +100,19 @@ int daysInMonth(int month, int year);
 void setup() {
 
   Serial.begin(115200);
-
+  lcd.init();                      // initialize the lcd 
+  lcd.init();
+  lcd.backlight();
   delay(1000);
-
+  pinMode(D5,OUTPUT);
+  digitalWrite(D5,LOW);
+  digitalWrite(D5,HIGH);
+  delay(50);
+  digitalWrite(D5,LOW);
+  delay(50);
+  digitalWrite(D5,HIGH);
+  delay(50);
+  digitalWrite(D5,LOW);
   Serial.println();
   Serial.println("==================================================");
   Serial.println("          AVENGERS: DOOMSDAY COUNTDOWN");
@@ -107,14 +122,10 @@ void setup() {
   // ----------------------------------------------------
   // CONNECT TO WIFI
   // ----------------------------------------------------
-
   connectWiFi();
-
-
   // ----------------------------------------------------
   // CONFIGURE INTERNET TIME
   // ----------------------------------------------------
-
   configTime(
     0,
     0,
@@ -168,15 +179,15 @@ void setup() {
 // ======================================================
 
 void loop() {
-
+  SHOWDOWN();
+  lcd.backlight();
   time_t now = time(nullptr);
-
   // Display current USA Eastern Time
   displayCurrentTime(now);
 
   // Display Avengers: Doomsday Countdown
   displayCountdown(now);
-
+  
   Serial.println(
     "--------------------------------------------------"
   );
@@ -190,9 +201,9 @@ void loop() {
 // ======================================================
 
 void connectWiFi() {
-
+  int cnt = 9;
+  pinMode(LED_BUILTIN,OUTPUT);
   Serial.print("Connecting to WiFi: ");
-
   Serial.println(ssid);
 
   WiFi.mode(WIFI_STA);
@@ -206,8 +217,13 @@ void connectWiFi() {
   while (WiFi.status() != WL_CONNECTED) {
 
     delay(500);
-
+    lcd.setCursor(0,0);
+    lcd.print("Searching");
+    lcd.setCursor(cnt,0);
+    lcd.print(".");
+    cnt++;
     Serial.print(".");
+    digitalWrite(LED_BUILTIN,HIGH);
   }
 
 
@@ -215,14 +231,32 @@ void connectWiFi() {
   Serial.println();
 
   Serial.println("WiFi Connected!");
-
+  digitalWrite(LED_BUILTIN,LOW);
+  lcd.clear();
+  lcd.setCursor(0,0);
+  for(int i=0;i<=2;i++)
+  {
+    lcd.print("Found");
+    delay(100);
+    lcd.clear();
+    delay(100);
+    lcd.setCursor(0,0);
+  }
   Serial.print("IP Address: ");
-
+  lcd.clear();
+  lcd.setCursor(0,0);
+  lcd.print("Located....");
+  lcd.setCursor(0,1);
+  lcd.print("7.8731N,80.7718E");
   Serial.println(
     WiFi.localIP()
   );
 
   Serial.println();
+  delay(500);
+  lcd.clear();
+  delay(100);
+  
 }
 
 
@@ -542,7 +576,79 @@ void displayCountdown(time_t currentEpoch) {
     minutes,
     seconds
   );
-
+  // ------------------------------ Printing on LCD.
+  lcd.setCursor(0,1);
+  lcd.print("0");
+  lcd.setCursor(1,1);
+  lcd.print(months);
+  lcd.setCursor(2,1);
+  lcd.print("M");
+  //----------------------------------- Months
+  lcd.setCursor(3,1);
+  lcd.print(" ");
+  lcd.setCursor(4,1);
+  lcd.print(days);
+  lcd.setCursor(6,1);
+  lcd.print("D");
+  //----------------------------------- Days
+  lcd.setCursor(7,1);
+  lcd.print(" ");
+  lcd.setCursor(8,1);
+  lcd.print(hours);
+  lcd.setCursor(10,1);
+  lcd.print("h");
+  //----------------------------------- Hours
+  lcd.setCursor(11,1);
+  lcd.print(" ");
+  lcd.setCursor(12,1);
+  lcd.print(minutes);
+  lcd.setCursor(14,1);
+  lcd.print("m");
+  //----------------------------------- Minutes
+  if(seconds < 10)
+  {
+    lcd.setCursor(13,0);
+    lcd.print("0");
+    lcd.setCursor(14,0);
+    lcd.print(seconds);
+    lcd.setCursor(15,0);
+    lcd.print("s");
+  }else{
+    lcd.setCursor(13,0);
+    lcd.print(seconds);
+    lcd.setCursor(15,0);
+    lcd.print("s");
+  }
+  //----------------------------------- Secs
 
   Serial.println();
+}
+// Display the Dimming
+void SHOWDOWN()
+{
+  if(!test)
+  {
+    for(int i=0;i<=5;i++){
+    lcd.backlight();
+    delay(50);
+    lcd.noBacklight();
+    delay(50);
+  }
+  for(int i=0;i<=1;i++){
+    lcd.backlight();
+    delay(50);
+    lcd.noBacklight();
+    delay(50);
+  }
+  for(int i=0;i<=1;i++){
+    lcd.backlight();
+    delay(50);
+    lcd.noBacklight();
+    lcd.clear();
+    lcd.setCursor(0,0);
+    lcd.print("DOOM ARRIVES");
+    delay(50);
+    test = 1;
+  }
+  }
 }

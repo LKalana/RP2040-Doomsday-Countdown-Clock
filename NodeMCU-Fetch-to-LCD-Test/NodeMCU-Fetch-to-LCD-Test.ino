@@ -11,13 +11,18 @@
    - Calculates remaining:
        DAYS : HOURS : MINUTES : SECONDS
    - Display the fetched data on the LCD
+   - Buzzer control function added
+
+   Fixes:
+   - Zero digit error fixed. Now it shows 01 instead 1.
+   
 */
 
 #include <ESP8266WiFi.h>
 #include <time.h>
 #include <Wire.h> 
 #include <LiquidCrystal_I2C.h>
-
+#define BUZZ_PIN D5 // Buzzer Pin
 LiquidCrystal_I2C lcd(0x27,20,4);  // set the LCD address to 0x27 for a 16 chars and 2 line display
 int test = 0;
 // ======================================================
@@ -104,15 +109,15 @@ void setup() {
   lcd.init();
   lcd.backlight();
   delay(1000);
-  pinMode(D5,OUTPUT);
-  digitalWrite(D5,LOW);
-  digitalWrite(D5,HIGH);
+  pinMode(BUZZ_PIN,OUTPUT);
+  digitalWrite(BUZZ_PIN,LOW);
+  digitalWrite(BUZZ_PIN,HIGH);
   delay(50);
-  digitalWrite(D5,LOW);
+  digitalWrite(BUZZ_PIN,LOW);
   delay(50);
-  digitalWrite(D5,HIGH);
+  digitalWrite(BUZZ_PIN,HIGH);
   delay(50);
-  digitalWrite(D5,LOW);
+  digitalWrite(BUZZ_PIN,LOW);
   Serial.println();
   Serial.println("==================================================");
   Serial.println("          AVENGERS: DOOMSDAY COUNTDOWN");
@@ -247,7 +252,7 @@ void connectWiFi() {
   lcd.setCursor(0,0);
   lcd.print("Located....");
   lcd.setCursor(0,1);
-  lcd.print("7.8731N,80.7718E");
+  lcd.print("7.8731N,80.7718E"); // Coordinates of Sri Lanka :) :p
   Serial.println(
     WiFi.localIP()
   );
@@ -576,34 +581,76 @@ void displayCountdown(time_t currentEpoch) {
     minutes,
     seconds
   );
+  BUZZ_CON(); // Buzz once.
   // ------------------------------ Printing on LCD.
-  lcd.setCursor(0,1);
-  lcd.print("0");
-  lcd.setCursor(1,1);
-  lcd.print(months);
-  lcd.setCursor(2,1);
-  lcd.print("M");
+  if(months < 10){
+    lcd.setCursor(0,1);
+    lcd.print("0");
+    lcd.setCursor(1,1);
+    lcd.print(months);
+    lcd.setCursor(2,1);
+    lcd.print("M");
+  }else{
+    lcd.setCursor(0,1);
+    lcd.print(months);
+    lcd.setCursor(2,1);
+    lcd.print("M");
+  }
   //----------------------------------- Months
-  lcd.setCursor(3,1);
-  lcd.print(" ");
-  lcd.setCursor(4,1);
-  lcd.print(days);
-  lcd.setCursor(6,1);
-  lcd.print("D");
+  if(days < 10){
+    lcd.setCursor(3,1);
+    lcd.print(" ");
+    lcd.setCursor(4,1);
+    lcd.print("0");
+    lcd.setCursor(5,1);
+    lcd.print(days);
+    lcd.setCursor(6,1);
+    lcd.print("D");
+  }else{
+    lcd.setCursor(3,1);
+    lcd.print(" ");
+    lcd.setCursor(4,1);
+    lcd.print(days);
+    lcd.setCursor(6,1);
+    lcd.print("D");
+  }
   //----------------------------------- Days
-  lcd.setCursor(7,1);
-  lcd.print(" ");
-  lcd.setCursor(8,1);
-  lcd.print(hours);
-  lcd.setCursor(10,1);
-  lcd.print("h");
+  if(hours < 10){
+    lcd.setCursor(7,1);
+    lcd.print(" ");
+    lcd.setCursor(8,1);
+    lcd.print("0");
+    lcd.setCursor(9,1);
+    lcd.print(hours);
+    lcd.setCursor(10,1);
+    lcd.print("h");
+  }else{
+    lcd.setCursor(7,1);
+    lcd.print(" ");
+    lcd.setCursor(8,1);
+    lcd.print(hours);
+    lcd.setCursor(10,1);
+    lcd.print("h");
+  }
   //----------------------------------- Hours
-  lcd.setCursor(11,1);
-  lcd.print(" ");
-  lcd.setCursor(12,1);
-  lcd.print(minutes);
-  lcd.setCursor(14,1);
-  lcd.print("m");
+  if(minutes < 10)
+  {
+    lcd.setCursor(11,1);
+    lcd.print(" ");
+    lcd.setCursor(12,1);
+    lcd.print("0");
+    lcd.setCursor(13,1);
+    lcd.print(minutes);
+    lcd.setCursor(14,1);
+    lcd.print("m");
+  }else{
+    lcd.setCursor(11,1);
+    lcd.print(" ");
+    lcd.setCursor(12,1);
+    lcd.print(minutes);
+    lcd.setCursor(14,1);
+    lcd.print("m");
+  }
   //----------------------------------- Minutes
   if(seconds < 10)
   {
@@ -651,4 +698,12 @@ void SHOWDOWN()
     test = 1;
   }
   }
+}
+
+// Buzzer Con
+void BUZZ_CON(){
+  digitalWrite(BUZZ_PIN,HIGH);
+  delay(50);
+  digitalWrite(BUZZ_PIN,LOW);
+  delay(50);
 }
